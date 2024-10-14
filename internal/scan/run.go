@@ -2,6 +2,7 @@ package scan
 
 import (
 	"context"
+	"fmt"
 	"sort"
 
 	"github.com/uw-labs/lichen/internal/license"
@@ -15,13 +16,13 @@ func Run(ctx context.Context, conf Config, binPaths ...string) (Summary, error) 
 	// extract modules details from each supplied binary
 	binaries, err := module.Extract(ctx, binPaths...)
 	if err != nil {
-		return Summary{}, err
+		return Summary{}, fmt.Errorf("failed to extract modules from binaries: %w", err)
 	}
 
 	// fetch each module - this returns pertinent details, including the OS path to the module
 	modules, err := module.Fetch(ctx, uniqueModuleRefs(binaries))
 	if err != nil {
-		return Summary{}, err
+		return Summary{}, fmt.Errorf("failed to fetch module details: %w", err)
 	}
 
 	// resolve licenses based on a minimum threshold
@@ -31,7 +32,7 @@ func Run(ctx context.Context, conf Config, binPaths ...string) (Summary, error) 
 	}
 	modules, err = license.Resolve(modules, threshold)
 	if err != nil {
-		return Summary{}, err
+		return Summary{}, fmt.Errorf("failed to resolve licenses: %w", err)
 	}
 
 	// apply any overrides, if configured
