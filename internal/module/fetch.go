@@ -45,6 +45,16 @@ func Fetch(ctx context.Context, refs []model.ModuleReference) ([]model.Module, e
 		return nil, fmt.Errorf("failed to fetch: %w (output: %s)", err, string(out))
 	}
 
+	// trim any leading content until the first JSON object
+	if i := bytes.Index(out, []byte("{")); i > 0 {
+		out = out[i:]
+	}
+
+	// trim any trailing content after the last JSON object
+	if i := bytes.LastIndex(out, []byte("}")); i < len(out)-1 {
+		out = out[:i+1]
+	}
+
 	// parse JSON output from `go mod download`
 	modules := make([]model.Module, 0)
 	dec := json.NewDecoder(bytes.NewReader(out))
